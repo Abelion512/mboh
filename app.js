@@ -1,42 +1,32 @@
 (function(){
-  /* =========================
-     App meta
-  ========================== */
   const APP_VERSION = '0.4.0';
 
-  /* ====== AI (default siap pakai) ====== */
-  // Kamu nanti bebas ganti endpoint/key. Default dipakai agar langsung jalan.
+  /* ====== AI (placeholder; key mu sendiri) ====== */
   const apiKey = 'AIzaSyBWyIYRxc8rBuVYlej6dGBtrJBSXVu9bUY';
   const AI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
-  /* =========== helpers =========== */
-  const $ = (s,r=document)=> r.querySelector(s);
+  /* Helpers */
+  const $ = (s, r=document)=> r.querySelector(s);
   const outlet  = $('#outlet');
   const landing = $('#landing');
   const esc = s => (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
   const fmt = iso => { try { return new Date(iso).toLocaleString('id-ID'); } catch { return iso||'-'; } };
   function toast(msg, type='ok', ms=2200){
     const el=document.createElement('div');
-    el.className='toast '+(type==='err'?'err':'ok');
-    el.textContent=msg;
-    $('#toastHost').appendChild(el);
-    setTimeout(()=>el.remove(),ms);
+    el.className='toast '+(type==='err'?'err':'ok'); el.textContent=msg;
+    $('#toastHost').appendChild(el); setTimeout(()=>el.remove(),ms);
   }
-  const newId = p => p + Math.random().toString(36).slice(2,9);
 
   /* =========================
-     Global state (localStorage)
+     Global state
   ========================== */
-  // Settings
   const LS_USERNAME  = 'abelion_username';
-  const LS_MODELCHAT = 'abelion_model_chat'; // psikologi|teman|mentor
-  const LS_IMPROVE   = 'abelion_data_improve'; // bool
-  // Data
-  const LS_TASKS   = 'abelion_tasks_v1';
-  const LS_JOURNAL = 'abelion_journal_v1';
-  const LS_KNOW    = 'abelion_knowledge_v1';
-  const LS_CHATS   = 'abelion_chats_v1';
-  const LS_WSTATE  = 'abelion_weather_state_v1'; // state untuk updateweather
+  const LS_MODELCHAT = 'abelion_model_chat';
+  const LS_IMPROVE   = 'abelion_data_improve';
+  const LS_TASKS     = 'abelion_tasks_v1';
+  const LS_JOURNAL   = 'abelion_journal_v1';
+  const LS_KNOW      = 'abelion_knowledge_v1';
+  const LS_CHATS     = 'abelion_chats_v1';
 
   const load = (k,def)=>{ try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(def))}catch{return def} };
   const save = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
@@ -45,11 +35,12 @@
   let modelChat = localStorage.getItem(LS_MODELCHAT) || 'teman';
   let improveModel = localStorage.getItem(LS_IMPROVE) === 'true';
 
-  let tasks     = load(LS_TASKS,[]);
-  let journal   = load(LS_JOURNAL,[]);
+  let tasks   = load(LS_TASKS,[]);
+  let journal = load(LS_JOURNAL,[]);
   let knowledge = load(LS_KNOW,[]);
-  let chats     = load(LS_CHATS,[]); // [{id, createdAt, history:[{role,text}], archived:false}]
-  let wState    = load(LS_WSTATE,{ lastFetch:null, auto:false, lastOk:false, place:'(–)', lat:-7.2575, lon:112.7521 });
+  let chats  = load(LS_CHATS,[]);
+
+  const newId = p => p + Math.random().toString(36).slice(2,9);
 
   /* =========================
      Header / profile / theme
@@ -63,7 +54,12 @@
   }
   paintAvatar();
 
-  profileBtn.addEventListener('click', (e)=>{ e.stopPropagation(); profileMenu.hidden = !profileMenu.hidden; });
+  profileBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const open = profileMenu.hidden;
+    profileMenu.hidden = !open;
+    profileBtn.setAttribute('aria-expanded', String(open));
+  });
   document.addEventListener('click',()=> profileMenu.hidden = true);
 
   $('#themeToggle').addEventListener('click', ()=>{
@@ -72,7 +68,7 @@
   });
 
   /* =========================
-     Service Worker (robust, path-safe)
+     Service Worker register
   ========================== */
   async function registerSW() {
     const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
@@ -81,9 +77,10 @@
       return null;
     }
     try {
-      const base = new URL('.', location.href);   // selalu berakhir /
-      const swUrl = new URL('sw.js', base).href;  // ex: http://localhost:8158/p/sw.js
-      const scope = base.pathname;                // ex: /p/
+      const base = new URL('.', location.href);    // selalu berakhiran /
+      const swUrl = new URL('sw.js', base).href;   // …/sw.js
+      const scope = base.pathname;                 // path sekarang
+
       const reg = await navigator.serviceWorker.register(swUrl, { scope });
 
       const hook = (w) => {
@@ -97,33 +94,28 @@
       if (reg.installing) hook(reg.installing);
       reg.addEventListener('updatefound', () => hook(reg.installing));
 
-      // reload otomatis saat SW baru mengendalikan halaman
       let reloaded = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloaded) return;
-        reloaded = true;
-        location.reload();
+        if (reloaded) return; reloaded = true; location.reload();
       });
 
       return reg;
     } catch (err) {
       console.error('SW register failed:', err);
-      toast(`Gagal mendaftar service worker: ${err.name||'TypeError'}`, 'err', 4000);
+      toast(`Gagal mendaftar service worker: ${err.name||'Error'}`, 'err', 4000);
       return null;
     }
   }
-  window.addEventListener('load', () => { registerSW(); });
+  window.addEventListener('load', ()=>{ registerSW(); });
 
-  // Quick menu
+  // Single handler untuk menu profil
   profileMenu.addEventListener('click', async (e)=>{
     const act = e.target?.dataset?.act; if(!act) return;
 
-    if (act === 'settings') {
-      location.hash = '#/settings';
-      return;
-    }
+    if (act === 'settings') location.hash = '#/settings';
+
     if (act === 'checkupdate') {
-      const reg = await registerSW(); // pastikan terdaftar
+      const reg = await registerSW();
       if (!navigator.serviceWorker.controller) {
         try { await fetch(new Request(new URL('index.html', new URL('.', location.href)), { cache:'reload' })); } catch {}
         setTimeout(() => {
@@ -136,22 +128,14 @@
       } else {
         openUpdateModal(true);
       }
-      return;
     }
-    if (act === 'profile') {
-      toast('Masuk sebagai: ' + username);
-      return;
-    }
-    if (act === 'logout') {
-      localStorage.clear();
-      toast('Logged out');
-      setTimeout(()=> location.reload(), 350);
-      return;
-    }
+
+    if (act === 'profile') toast('Masuk sebagai: ' + username);
+    if (act === 'logout') { localStorage.clear(); toast('Logged out'); setTimeout(()=>location.reload(),350); }
   });
 
   /* =========================
-     Update modal + flow (v2)
+     Update modal + flow
   ========================== */
   const verKey = 'abelion_app_version';
   const updKey = 'abelion_update_state'; // 'idle' | 'prompt' | 'updating' | 'done'
@@ -169,9 +153,9 @@
     if(!loader) return;
     loader.hidden = true;
     loader.style.display = 'none';
-    if(UI.bar){ UI.bar.style.width = '0%'; }
-    if(UI.pct){ UI.pct.textContent = '0%'; }
-    if(UI.step){ UI.step.textContent = 'Menyiapkan paket…'; }
+    if(UI.bar) UI.bar.style.width = '0%';
+    if(UI.pct) UI.pct.textContent = '0%';
+    if(UI.step) UI.step.textContent = 'Menyiapkan paket…';
   }
   hideLoaderHard();
 
@@ -183,6 +167,17 @@
   }
 
   function openUpdateModal(isManual){
+    // (opsional) isi release notes kalau ada update-manifest di server
+    try {
+      fetch('./update-manifest.json', {cache:'no-store'})
+        .then(r=>r.ok?r.json():null)
+        .then(j=>{
+          if (!j) return;
+          const ul = document.getElementById('releaseNotes');
+          ul.innerHTML = (j.notes||[]).map(li=>`<li>${esc(li)}</li>`).join('') || '<li>Peningkatan kecil.</li>';
+        }).catch(()=>{});
+    } catch {}
+
     localStorage.setItem(updKey, 'prompt');
     modal.showModal();
 
@@ -200,45 +195,53 @@
     };
     modal.addEventListener('close', onClose);
   }
-  
-  async function startUpdateFlow() {
-  const m = JSON.parse(localStorage.getItem('abelion_latest_manifest') || '{}');
-  loader.hidden = false; loader.style.display = 'grid';
-  UI.title.textContent = `Memperbarui Abelion AI ke v${m.version || '??'}…`;
 
-  const assets = Array.isArray(m.assets) ? m.assets : [];
-  const total = assets.reduce((a,b)=>a + (b.bytes||0), 0) || 1;
+  async function startUpdateFlow(){
+    localStorage.setItem(updKey, 'updating');
+    loader.hidden = false; loader.style.display = 'grid';
+    UI.title.textContent = 'Memperbarui Abelion AI…';
+    try{
+      const reg = await navigator.serviceWorker.getRegistration();
+      reg?.waiting?.postMessage('SKIP_WAITING');
+    }catch{}
 
-  let done = 0;
-  for (const a of assets) {
-    UI.step.textContent = `Mengunduh ${a.path} (${Math.round((a.bytes||0)/1024)} KB)…`;
-    const dur = Math.min(1200, Math.max(300, (a.bytes||0) / 2048 * 100)); // approx
-    await new Promise(res => {
+    const steps = [
+      {name:'Mengunduh aset', duration: 900},
+      {name:'Memverifikasi berkas', duration: 700},
+      {name:'Menerapkan perubahan', duration: 1100},
+      {name:'Membersihkan cache', duration: 600},
+    ];
+    const total = steps.reduce((a,b)=>a+b.duration,0);
+    let elapsed = 0;
+
+    for (let i=0;i<steps.length;i++){
+      UI.step.textContent = steps[i].name + '…';
+      const chunk = steps[i].duration;
       const start = performance.now();
-      const tick = () => {
-        const t = performance.now() - start;
-        const p = Math.min(1, t / dur);
-        const prog = Math.floor(((done + p*(a.bytes||0)) / total) * 100);
-        UI.bar.style.width = Math.max(1, Math.min(99, prog)) + '%';
-        UI.pct.textContent = Math.max(1, Math.min(99, prog)) + '%';
-        if (p >= 1) { done += (a.bytes||0); res(); } else requestAnimationFrame(tick);
-      };
-      tick();
-    });
+      await new Promise(res=>{
+        const timer = setInterval(()=>{
+          const t = performance.now() - start;
+          const local = Math.min(1, t/chunk);
+          const prog = Math.min(99, Math.floor(((elapsed + local*chunk)/total)*100));
+          UI.bar.style.width = prog + '%';
+          UI.pct.textContent = prog + '%';
+          UI.eta.textContent = '~' + Math.max(0, Math.ceil((total-(elapsed+local*chunk))/1000)) + ' detik';
+          if (local >= 1){ clearInterval(timer); elapsed += chunk; res(); }
+        }, 60);
+      });
+    }
+
+    UI.step.textContent = 'Finalisasi…';
+    UI.bar.style.width = '100%';
+    UI.pct.textContent = '100%';
+    UI.eta.textContent = 'Selesai';
+
+    localStorage.setItem(verKey, APP_VERSION);
+    localStorage.setItem('abelion_update_done', '1');
+    localStorage.setItem(updKey, 'done');
+    setTimeout(()=> location.reload(), 350);
   }
 
-  UI.step.textContent = 'Finalisasi…';
-  UI.bar.style.width = '100%';
-  UI.pct.textContent = '100%';
-  UI.eta.textContent = 'Selesai';
-
-  // Minta SW naik tahta jika ada update
-  try { (await navigator.serviceWorker.getRegistration())?.waiting?.postMessage('SKIP_WAITING'); } catch {}
-
-  localStorage.setItem('abelion_update_done', '1');
-  setTimeout(()=>location.reload(), 400);
-}
-  
   if (localStorage.getItem('abelion_update_done') === '1'){
     hideLoaderHard();
     localStorage.removeItem('abelion_update_done');
@@ -249,7 +252,7 @@
   /* =========================
      Router
   ========================== */
-  let chatMode = localStorage.getItem('chatMode') || 'mirror'; // 'normal'|'mirror'|'debate'
+  let chatMode = localStorage.getItem('chatMode') || 'mirror';
   function setActiveLinks(route){
     document.querySelectorAll('[data-route]').forEach(a=>{
       const is = a.getAttribute('href')===`#/${route}`;
@@ -264,13 +267,12 @@
     if(route==='home'){ landing.hidden=false; outlet.hidden=true; outlet.innerHTML=''; renderHome(); return; }
     landing.hidden=true; outlet.hidden=false;
 
-    if(route==='chat')          return pageChat();
-    if(route==='tasks')         return pageTasks();
-    if(route==='weather')       return pageWeather();
-    if(route==='updateweather') return pageUpdateWeather();
-    if(route==='journal')       return pageJournal();
-    if(route==='knowledge')     return pageKnowledge();
-    if(route==='settings')      return pageSettings();
+    if(route==='chat')      return pageChat();
+    if(route==='tasks')     return pageTasks();
+    if(route==='weather')   return pageWeather();
+    if(route==='journal')   return pageJournal();
+    if(route==='knowledge') return pageKnowledge();
+    if(route==='settings')  return pageSettings();
 
     outlet.innerHTML = `<div class="card">Not found</div>`;
   }
@@ -303,7 +305,7 @@
       const cur = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature&timezone=Asia%2FJakarta`).then(r=>r.json());
       const c = cur?.current||{};
       curBadge = `<span class="badge">Jakarta ${c.temperature_2m??'–'}°C (feels ${c.apparent_temperature??'–'}°)</span>`;
-    }catch(_){}
+    }catch{}
     const q = QUOTES[(new Date().getDate()) % QUOTES.length];
 
     const host = $('#landing');
@@ -331,13 +333,14 @@
       mode==='mirror' ? 'Mental Mirror Mode: Ajukan pertanyaan reflektif, gali asumsi, hal terlewat, potensi bias; beri umpan balik realistis; singkat & jelas.' :
       mode==='debate' ? 'Debate Partner Mode: Tulis pro vs kontra berimbang; akhiri dengan satu pertanyaan “Sudahkah kamu mempertimbangkan X?”' :
                         'Normal Assistant Mode: Jawab singkat, jelas, langsung ke inti.';
+
     const tone =
       persona==='psikologi' ? 'Persona: Psikolog yang empatik, validasi emosi dulu, lalu beri langkah kecil berbasis CBT.' :
       persona==='mentor'    ? 'Persona: Mentor kompeten, fokus solusi, beri checklist dan referensi cepat.' :
                                'Persona: Teman santai, hangat, gunakan bahasa sehari-hari dan dukungan ringan.';
+
     return `${base}\n${tone}\nPanggil user dengan namanya jika ada: ${username}. Hindari jawaban terlalu panjang di ponsel.`;
   }
-
   function getOrCreateChat(){
     let active = chats.find(c=>!c.archived);
     if(!active){
@@ -346,7 +349,6 @@
     }
     return active;
   }
-
   function pageChat(){
     outlet.innerHTML = `
       <section class="card chat-card">
@@ -364,9 +366,7 @@
             <button data-mode="debate"  class="${chatMode==='debate'?'active':''}">Debate</button>
           </div>
         </div>
-
         <div id="chatLog" class="chat-log"></div>
-
         <div class="chat-input">
           <input id="chatInput" class="in" placeholder="Tulis pesan…">
           <button id="chatSend" class="btn btn-accent">Kirim</button>
@@ -413,7 +413,7 @@
         const reply = res?.candidates?.[0]?.content?.parts?.[0]?.text || 'Maaf, tidak ada respon.';
         sk.remove();
         active.history.push({role:'assistant', text: reply});
-        if(improveModel){ /* telemetry anonim bisa ditambahkan nanti */ }
+        if(improveModel){ /* telemetry anonim di masa depan */ }
         save(LS_CHATS,chats); renderHistory();
       }catch(err){
         sk.remove();
@@ -425,53 +425,17 @@
   }
 
   /* =========================
-     Tasks  (+ export .ICS)
+     Tasks
   ========================== */
-  function icsDate(d){
-    const pad=n=>String(n).padStart(2,'0');
-    const z = new Date(d);
-    return z.getUTCFullYear() +
-      pad(z.getUTCMonth()+1) +
-      pad(z.getUTCDate()) + 'T' +
-      pad(z.getUTCHours()) +
-      pad(z.getUTCMinutes()) +
-      pad(z.getUTCSeconds()) + 'Z';
-  }
-  function buildICS(list){
-    const lines = [
-      'BEGIN:VCALENDAR','PRODID:-//Abelion AI//ID','VERSION:2.0','CALSCALE:GREGORIAN','METHOD:PUBLISH'
-    ];
-    const priMap = {P1:1,P2:5,P3:9};
-    for (const t of list){
-      const start = new Date(t.dueAt||Date.now());
-      const end   = new Date(start.getTime()+60*60*1000); // 1 jam
-      const uid   = `${t.id}@abelion.local`;
-      lines.push(
-        'BEGIN:VEVENT',
-        `UID:${uid}`,
-        `DTSTAMP:${icsDate(new Date())}`,
-        `DTSTART:${icsDate(start)}`,
-        `DTEND:${icsDate(end)}`,
-        `SUMMARY:${(t.title||'Task').replace(/[\r\n]+/g,' ')}`,
-        `PRIORITY:${priMap[t.priority]||5}`,
-        `STATUS:${t.status==='done'?'CONFIRMED':'TENTATIVE'}`,
-        'END:VEVENT'
-      );
-    }
-    lines.push('END:VCALENDAR');
-    return lines.join('\r\n');
-  }
-
+  let tasksHandlerBound = false;
   function pageTasks(){
     outlet.innerHTML = `
       <section class="card">
         <h2>Reminder / Tasks</h2>
-
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 10px">
           <button id="btnCal" class="btn btn-accent">📆 Connect to Calendar</button>
-          <span class="small">Ekspor semua task ke iCalendar (.ics).</span>
+          <span class="small">Sinkronisasi Google Calendar/ICS (placeholder).</span>
         </div>
-
         <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:6px">
           <label style="flex:2;min-width:200px">
             <div class="small">Judul</div>
@@ -487,14 +451,12 @@
           </label>
           <button id="tAdd" class="btn btn-accent">+ Tambah</button>
         </div>
-
         <div style="overflow:auto;margin-top:12px">
           <table class="table">
             <thead><tr><th>Task</th><th>Prioritas</th><th>Jatuh Tempo</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="tasksBody"></tbody>
           </table>
         </div>
-
         <div style="margin-top:12px;color:#97a0c2">
           <b>Upcoming 24h:</b> <span id="upcomingWrap">–</span>
         </div>
@@ -502,15 +464,7 @@
     `;
 
     $('#btnCal').addEventListener('click', ()=>{
-      if (!tasks.length){ toast('Belum ada task untuk diekspor', 'err'); return; }
-      const ics = buildICS(tasks);
-      const blob = new Blob([ics], {type: 'text/calendar;charset=utf-8'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `AbelionTasks_${new Date().toISOString().slice(0,10)}.ics`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      toast('File kalender .ics telah diunduh');
+      alert('Integrasi Calendar (dummy):\n• Export .ics dari tasks untuk diimport ke Google Calendar.\n• Atau sambungkan ke backend untuk membuat event langsung.');
     });
 
     const d = new Date(Date.now() + 2*60*60*1000);
@@ -525,7 +479,10 @@
       $('#tTitle').value=''; $('#tPri').value='P2';
     });
 
-    document.addEventListener('click', onTaskAction);
+    if(!tasksHandlerBound){
+      document.addEventListener('click', onTaskAction);
+      tasksHandlerBound = true;
+    }
     paintTasks();
 
     function onTaskAction(e){
@@ -568,19 +525,18 @@
   }
 
   /* =========================
-     Weather (GPS + Nama Daerah + BMKG link)
+     Weather
   ========================== */
   function pageWeather(){
     outlet.innerHTML = `
       <section class="card">
         <h2>Weather</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
-          <label style="width:140px"><div class="small">Latitude</div><input id="wLat" class="in" value="${wState.lat}"></label>
-          <label style="width:140px"><div class="small">Longitude</div><input id="wLon" class="in" value="${wState.lon}"></label>
+          <label style="width:140px"><div class="small">Latitude</div><input id="wLat" class="in" value="-7.2575"></label>
+          <label style="width:140px"><div class="small">Longitude</div><input id="wLon" class="in" value="112.7521"></label>
           <button id="wGps" class="btn">📍 Pakai GPS</button>
           <button id="wFetch" class="btn btn-accent">Fetch</button>
         </div>
-
         <div class="row" style="margin-top:8px">
           <label style="flex:1;min-width:220px">
             <div class="small">Cari nama daerah (contoh: Kebayoran Baru, Surabaya)</div>
@@ -588,8 +544,7 @@
           </label>
           <button id="wSearch" class="btn">🔎 Cari</button>
         </div>
-
-        <div id="wPlace" class="small" style="margin-top:8px">Lokasi: ${esc(wState.place)}</div>
+        <div id="wPlace" class="small" style="margin-top:8px">Lokasi: (–)</div>
         <div id="wTZ" class="small" style="margin-top:4px">Zona waktu: (auto)</div>
         <div id="wNow" style="margin-top:10px"></div>
         <div id="w7" class="grid4" style="grid-template-columns:repeat(7,1fr);margin-top:12px"></div>
@@ -617,11 +572,11 @@
         const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=id&format=json`).then(x=>x.json());
         const p = r?.results?.[0];
         if(p){ $('#wLat').value=p.latitude; $('#wLon').value=p.longitude; await setPlaceName(p.latitude, p.longitude); loadWeather(); return; }
-      }catch(_){}
+      }catch{}
       try{
         const j = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&accept-language=id&limit=1`).then(x=>x.json());
         const p = j?.[0]; if(p){ $('#wLat').value=p.lat; $('#wLon').value=p.lon; await setPlaceName(p.lat,p.lon); loadWeather(); return; }
-      }catch(_){}
+      }catch{}
       toast('Tidak ditemukan. Coba nama lain.', 'err');
     });
 
@@ -654,17 +609,16 @@
         const j = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=id`).then(x=>x.json());
         if(j?.address){ name = formatIndo(j.address); }
         if(!name) name = j?.display_name || '';
-      }catch(_){}
+      }catch{}
       if(!name){
         try{
           const r1 = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=id&format=json`).then(x=>x.json());
           const p = r1?.results?.[0];
           if(p) name = [p.name, p.admin3, p.admin2, p.admin1, p.country].filter(Boolean).join(', ');
-        }catch(_){}
+        }catch{}
       }
       if(!name) name = `(${lat}, ${lon})`;
       el.textContent = `Lokasi: ${name}`;
-      wState.place = name; wState.lat=Number(lat); wState.lon=Number(lon); save(LS_WSTATE,wState);
       $('#bmkgLink').href = 'https://www.bmkg.go.id/';
     }
 
@@ -699,63 +653,10 @@
             <div style="font-size:20px;margin-top:4px">${tMax[i]??'–'}°</div>
             <div class="badge" style="margin-top:6px">Rain ${rain[i]??'–'}%</div>
           </div>`).join('');
-
-        wState.lastFetch = new Date().toISOString();
-        wState.lastOk = true;
-        save(LS_WSTATE,wState);
       }catch(err){
         $('#wNow').innerHTML = `<div class="card">Gagal memuat cuaca: ${esc(String(err))}</div>`;
         $('#w7').innerHTML = ''; $('#wTZ').textContent = 'Zona waktu: (gagal memuat)';
-        wState.lastOk = false; save(LS_WSTATE,wState);
       }
-    }
-  }
-
-  /* =========================
-     UpdateWeather Page (ringkas)
-  ========================== */
-  function pageUpdateWeather(){
-    const last = wState.lastFetch ? new Date(wState.lastFetch).toLocaleString('id-ID') : '—';
-    outlet.innerHTML = `
-      <section class="card">
-        <h2>Update Weather</h2>
-        <div class="row" style="gap:10px">
-          <div class="badge">Lokasi: ${esc(wState.place)}</div>
-          <div class="badge">Terakhir: ${last}</div>
-          <div class="badge">Status: ${wState.lastOk?'✅ OK':'⚠️ Error'}</div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-          <button id="uwRefresh" class="btn btn-accent">🔄 Refresh Sekarang</button>
-          <label class="badge" style="cursor:pointer">
-            <input id="uwAuto" type="checkbox" ${wState.auto?'checked':''}> Auto refresh tiap 30 menit
-          </label>
-          <a class="btn" href="#/weather">Buka Halaman Cuaca</a>
-        </div>
-        <div id="uwLog" class="snip" style="margin-top:12px">Siap.</div>
-      </section>
-    `;
-
-    $('#uwRefresh').addEventListener('click', async ()=>{
-      $('#uwLog').textContent = 'Merefresh…';
-      // panggil util dari pageWeather secara sederhana: set ulang hash → kembali lagi
-      const back = location.hash;
-      location.hash = '#/weather';
-      setTimeout(()=>{ location.hash = back; $('#uwLog').textContent = 'Selesai memuat (cek halaman Cuaca).'; }, 1200);
-    });
-    $('#uwAuto').addEventListener('change', (e)=>{
-      wState.auto = e.target.checked; save(LS_WSTATE,wState);
-      toast(wState.auto?'Auto refresh aktif':'Auto refresh dimatikan');
-    });
-
-    // scheduler ringan
-    clearInterval(window.__uwTimer);
-    if (wState.auto){
-      window.__uwTimer = setInterval(()=>{
-        const back = location.hash;
-        if (back === '#/updateweather') return; // jangan bolak-balik
-        location.hash = '#/weather';
-        setTimeout(()=>{ location.hash = back; }, 600);
-      }, 30*60*1000);
     }
   }
 
@@ -785,12 +686,10 @@
           <button id="jSave" class="btn btn-accent">Simpan</button>
           <button id="jClear" class="btn">Bersihkan Semua</button>
         </div>
-
         <div style="margin-top:14px">
           <div class="small">Mood 7 hari terakhir</div>
           <div id="jSpark" class="spark" aria-label="grafik mood"></div>
         </div>
-
         <div style="margin-top:14px">
           <div class="small">Riwayat terbaru</div>
           <div id="jList"></div>
@@ -918,7 +817,7 @@
   }
 
   /* =========================
-     Settings (username, model chat, data controls)
+     Settings
   ========================== */
   function pageSettings(){
     outlet.innerHTML = `
@@ -990,55 +889,3 @@
   }
 
 })();
-
-async function fetchManifest() {
-  // cache-bust
-  const url = `/update-manifest.json?ts=${Date.now()}`;
-  const res = await fetch(url, { cache: 'no-cache' });
-  if (!res.ok) throw new Error('manifest not found');
-  return res.json();
-}
-
-async function openUpdateModal(isManual) {
-  try {
-    const m = await fetchManifest();
-    // m.version, m.changelog_markdown, m.total_bytes, m.assets[]
-
-    // Render catatan dinamis
-    const list = (m.changelog_markdown || '')
-      .split('\n')
-      .filter(Boolean)
-      .map(line => `<li>${line}</li>`)
-      .join('');
-
-    document.querySelector('#updateModal .release').innerHTML = list || '<li>Perbaikan & peningkatan.</li>';
-
-    // Skala progress berdasarkan ukuran aset berbeda (bandingkan dengan cache lama kalau mau).
-    const SIZE_MB = (m.total_bytes / 1024 / 1024);
-    const est = SIZE_MB < 0.3 ? 2 : SIZE_MB < 1 ? 4 : SIZE_MB < 3 ? 7 : 12;
-    document.getElementById('updEta').textContent = `~${est} detik`;
-
-    // Simulasikan steps berdasar persentase ukuran file terbesar
-    const topAsset = [...m.assets].sort((a,b)=>b.bytes-a.bytes)[0];
-    const domStep = document.getElementById('updStep');
-    const bar = document.getElementById('updBar');
-    const pct = document.getElementById('updPct');
-
-    // tampilkan modal prompt
-    document.getElementById('updateModal').showModal();
-
-    // saat klik Perbarui Sekarang → jalankan startUpdateFlow(m)
-    const form = document.querySelector('#updateModal form');
-    form.addEventListener('close', () => {});
-    form.addEventListener('submit', e => e.preventDefault());
-    // (handler close ada di kode kamu—tetap gunakan itu)
-
-    // Simpan manifest terbaru kalau mau dipakai setelah reload
-    localStorage.setItem('abelion_latest_manifest', JSON.stringify(m));
-  } catch (e) {
-    if (isManual) toast('Tidak ada pembaruan atau manifest belum ter‑deploy', 'err');
-  }
-}
-
-// Di tombol 'Cek Pembaruan'
-document.querySelector('[data-act="checkupdate"]')?.addEventListener('click', () => openUpdateModal(true));
