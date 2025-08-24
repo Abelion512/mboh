@@ -110,5 +110,29 @@
   <script>window.onerror=(m,s,l)=>console.warn('JS Error:',m,'@',s+':'+l)</script>
   <script>window.APP_VERSION='0.4.0';</script>
   <script defer src="app.js"></script>
+
+  <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBGrzFc4feUC4wbQKUg9NVFNLViKrS-bLA",
+    authDomain: "abelion-ai-466122.firebaseapp.com",
+    projectId: "abelion-ai-466122",
+    storageBucket: "abelion-ai-466122.firebasestorage.app",
+    messagingSenderId: "384809699344",
+    appId: "1:384809699344:web:85a518ed8f5807b3aca295",
+    measurementId: "G-C3NW820478"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
 </body>
 </html>
