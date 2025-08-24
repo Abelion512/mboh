@@ -1,114 +1,114 @@
 <!doctype html>
 <html lang="id">
-    <head>
-          <meta charset="utf-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1"/>
-              <meta name="theme-color" content="#0a0c15">
-                <title>Abelion AI</title>
-                  <link rel="stylesheet" href="styles.css">
-    </head>
-    <body>
-          <div class="layout">
-                <!-- Sidebar -->
-                <aside class="sidebar">
-                          <div class="brand"><span class="logo">A</span>ABELION</div>
-                              <nav class="nav">
-                                        <a href="#/home" data-route>🏠 Home</a>
-                                            <a href="#/chat" data-route>💬 Chat AI</a>
-                                                <a href="#/tasks" data-route>⏰ Reminder</a>
-                                                    <a href="#/weather" data-route>🌦️ Weather</a>
-                                                        <a href="#/journal" data-route>📓 Journal</a>
-                                                            <a href="#/knowledge" data-route>🧠 Knowledge</a>
-                                                                <a href="#/settings" data-route>⚙️ Settings</a>
-                              </nav>
-                                  <div class="foot">Abelion AI • v0.4.0</div>
-                            </aside>
-                        
-                            <!-- Main -->
-                            <main class="main">
-                                      <header class="top">
-                                                <div class="hud"><span class="dot"></span><span id="hudText">Ready</span></div>
-                                            
-                                                    <!-- Profile / quick menu -->
-                                                        <div class="profile">
-                                                                      <button id="themeToggle" class="icon-btn" title="Tema">🌙</button>
-                                                                              <div class="avatar" id="profileBtn">U ▾</div>
-                                                                                      <div id="profileMenu" class="menu" hidden>
-                                                                                                    <button data-act="settings">⚙️ Pengaturan</button>
-                                                                                                            <button data-act="checkupdate">🧪 Cek Pembaruan</button>
-                                                                                                                    <button data-act="profile">👤 Profil</button>
-                                                                                                                            <hr>
-                                                                                                                                    <button data-act="logout" class="danger">↩ Logout</button>
-                                                                                      </div>
-                                                                                    </div>
-                                                                                </header>
-                                                                            
-                                                                                  <!-- Landing -->
-                                                                                      <section class="hero" id="landing">
-                                                                                                <h1>Abelion AI</h1>
-                                                                                                    <p class="sub">Asisten harian yang ringan, cepat, dan mudah dipahami.</p>
-                                                                                                        <div class="cta">
-                                                                                                                      <a class="btn btn-accent" href="#/chat">Mulai Chat</a>
-                                                                                                                              <a class="btn" href="#/tasks">Reminder</a>
-                                                                                                                                      <a class="btn" href="#/weather">Cek Cuaca</a>
-                                                                                                        </div>
-                                                                                                    
-                                                                                                            <div class="grid4">
-                                                                                                                          <div class="card"><b>Ramah HP</b><br>CSS minim, no framework.</div>
-                                                                                                                                  <div class="card"><b>Cepat</b><br>Tanpa modul/webpack.</div>
-                                                                                                                                          <div class="card"><b>Futuristik</b><br>Dark premium & glassy.</div>
-                                                                                                                                                  <div class="card"><b>Modular</b><br>Tambah fitur bertahap.</div>
-                                                                                                            </div>
-                                                                                                                <div class="glow" aria-hidden="true"></div>
-                                                                                                        </section>
-                                                                                                    
-                                                                                                          <!-- Outlet fitur -->
-                                                                                                              <section id="outlet" class="outlet" hidden></section>
-                                                                                                    </main>
-                                                                                                </div>
-                                                                                            
-                                                                                              <!-- Update modal -->
-                                                                                              <dialog id="updateModal" class="modal">
-                                                                                                    <form method="dialog" class="modal-card">
-                                                                                                              <h3>Pembaruan Tersedia</h3>
-                                                                                                                  <p>Versi baru tersedia! Catatan Rilis:</p>
-                                                                                                                      <ul class="release">
-                                                                                                                                <li>Profile menu fixed (z-index) & cek update.</li>
-                                                                                                                                    <li>Settings: username, model chat, data controls.</li>
-                                                                                                                                        <li>Weather: cari nama daerah + GPS, link BMKG.</li>
-                                                                                                                                            <li>Stabilitas & polishing UI.</li>
-                                                                                                                      </ul>
-                                                                                                                          <div class="modal-actions">
-                                                                                                                                    <button value="later" class="btn">Nanti Saja</button>
-                                                                                                                                        <button value="update" class="btn btn-accent">Perbarui Sekarang</button>
-                                                                                                                          </div>
-                                                                                                                        </form>
-                                                                                                                    </dialog>
-                                                                                                                
-                                                                                                                  <!-- Update loader overlay -->
-                                                                                                                  <div id="updateLoader" class="loader" hidden aria-live="polite">
-                                                                                                                        <div class="loader-card">
-                                                                                                                                  <div class="loader-head">
-                                                                                                                                            <span class="dot"></span>
-                                                                                                                                                <b id="updTitle">Memperbarui Abelion AI…</b>
-                                                                                                                                  </div>
-                                                                                                                                      <div id="updStep" class="small">Menyiapkan paket…</div>
-                                                                                                                                          <div class="progress-wrap">
-                                                                                                                                                    <div id="updBar" class="progress-bar" style="width:0%"></div>
-                                                                                                                                          </div>
-                                                                                                                                              <div class="loader-foot">
-                                                                                                                                                        <span id="updPct">0%</span>
-                                                                                                                                                            <span id="updEta" class="small">~10 detik</span>
-                                                                                                                                              </div>
-                                                                                                                                            </div>
-                                                                                                                                        </div>
-                                                                                                                                    
-                                                                                                                                      <!-- Toast host -->
-                                                                                                                                      <div id="toastHost"></div>
-                                                                                                                                    
-                                                                                                                                      <!-- Versi aplikasi -->
-                                                                                                                                      <script>window.APP_VERSION='0.4.0';</script>
-                                                                                                                                      <!-- App (ES Module) -->
-                                                                                                                                      <script type="module" src="app.js"></script>
-                                                                                                                                    </body>
-                                                                                                                                </html>-->-->-->-->-->-->-->-->-->-->
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0a0c15">
+  <title>Abelion AI</title>
+
+  <!-- (Opsional) PWA manifest jika ada di repo -->
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand"><span class="logo">A</span>ABELION</div>
+      <nav class="nav">
+        <a href="#/home" data-route>🏠 Home</a>
+        <a href="#/chat" data-route>💬 Chat AI</a>
+        <a href="#/tasks" data-route>⏰ Reminder</a>
+        <a href="#/weather" data-route>🌦️ Weather</a>
+        <a href="#/journal" data-route>📓 Journal</a>
+        <a href="#/knowledge" data-route>🧠 Knowledge</a>
+        <a href="#/settings" data-route>⚙️ Settings</a>
+      </nav>
+      <div class="foot">Abelion AI • v0.4.0</div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="top">
+        <div class="hud"><span class="dot"></span><span id="hudText">Ready</span></div>
+
+        <div class="profile">
+          <button id="themeToggle" class="icon-btn" title="Tema">🌙</button>
+          <div class="avatar" id="profileBtn" aria-haspopup="menu" aria-expanded="false">U ▾</div>
+          <div id="profileMenu" class="menu" hidden role="menu">
+            <button data-act="settings" role="menuitem">⚙️ Pengaturan</button>
+            <button data-act="checkupdate" role="menuitem">🧪 Cek Pembaruan</button>
+            <button data-act="profile" role="menuitem">👤 Profil</button>
+            <hr>
+            <button data-act="logout" class="danger" role="menuitem">↩ Logout</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Landing -->
+      <section class="hero" id="landing">
+        <h1>Abelion AI</h1>
+        <p class="sub">Asisten harian yang ringan, cepat, dan mudah dipahami.</p>
+        <div class="cta">
+          <a class="btn btn-accent" href="#/chat">Mulai Chat</a>
+          <a class="btn" href="#/tasks">Reminder</a>
+          <a class="btn" href="#/weather">Cek Cuaca</a>
+        </div>
+
+        <div class="grid4">
+          <div class="card"><b>Ramah HP</b><br>CSS minim, no framework.</div>
+          <div class="card"><b>Cepat</b><br>Tanpa modul/webpack.</div>
+          <div class="card"><b>Futuristik</b><br>Dark premium & glassy.</div>
+          <div class="card"><b>Modular</b><br>Tambah fitur bertahap.</div>
+        </div>
+        <div class="glow" aria-hidden="true"></div>
+      </section>
+
+      <!-- Outlet fitur -->
+      <section id="outlet" class="outlet" hidden></section>
+    </main>
+  </div>
+
+  <!-- Update modal -->
+  <dialog id="updateModal" class="modal">
+    <form method="dialog" class="modal-card">
+      <h3>Pembaruan Tersedia</h3>
+      <p>Versi baru tersedia! Catatan Rilis:</p>
+      <ul class="release" id="releaseNotes">
+        <li>Perbaikan stabilitas & UI.</li>
+      </ul>
+      <div class="modal-actions">
+        <button value="later" class="btn">Nanti Saja</button>
+        <button value="update" class="btn btn-accent">Perbarui Sekarang</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Update loader overlay -->
+  <div id="updateLoader" class="loader" hidden aria-live="polite">
+    <div class="loader-card">
+      <div class="loader-head">
+        <span class="dot"></span>
+        <b id="updTitle">Memperbarui Abelion AI…</b>
+      </div>
+      <div id="updStep" class="small">Menyiapkan paket…</div>
+      <div class="progress-wrap">
+        <div id="updBar" class="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="loader-foot">
+        <span id="updPct">0%</span>
+        <span id="updEta" class="small">~10 detik</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast host -->
+  <div id="toastHost"></div>
+
+  <!-- (opsional) error popup membantu debug di mobile -->
+  <script>window.onerror=(m,s,l)=>console.warn('JS Error:',m,'@',s+':'+l)</script>
+  <script>window.APP_VERSION='0.4.0';</script>
+  <script defer src="app.js"></script>
+</body>
+</html>
