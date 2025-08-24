@@ -1,67 +1,75 @@
-/* Abelion AI Service Worker – universal scope-safe */
-const SW_TAG = 'v2';
-const CACHE = `abelion-cache::${SW_TAG}`;
+/* Abelion AI Service Worker – stable */
+'use strict';
 
-// Tentukan base path sesuai lokasi deploy (GitHub Pages biasanya pakai subfolder)
-const SCOPE_PATH = self.registration.scope.replace(/\/+$/, '/') || '/';
-const p = (rel) => SCOPE_PATH + rel.replace(/^\/+/, '');
+const SW_VERSION = self.APP_VERSION || 'v0.0.0';
+const CACHE = `abelion-cache::${SW_VERSION}`;
 
-// Cache inti
+// Gunakan path relatif agar jalan di GitHub Pages / subfolder
 const CORE = [
-  p('index.html'),
-  p('styles.css'),
-  p('app.js'),
-  p('manifest.webmanifest')
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './privacy.js'
 ];
 
-// Install
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(CORE)).catch(() => null)
+// Install: cache app shell
+self.addEventListener('install', (event)=>{
+  event.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(CORE))
   );
   self.skipWaiting();
 });
 
-// Activate
-self.addEventListener('activate', (e) => {
-  e.waitUntil((async () => {
+// Activate: hapus cache lama
+self.addEventListener('activate', (event)=>{
+  event.waitUntil((async()=>{
     const keys = await caches.keys();
     await Promise.all(
-      keys.filter((k) => k.startsWith('abelion-cache::') && k !== CACHE).map((k) => caches.delete(k))
+      keys
+        .filter(k=>k.startsWith('abelion-cache::') && k!==CACHE)
+        .map(k=>caches.delete(k))
     );
     await self.clients.claim();
   })());
 });
 
-// Fetch
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  const isHTML = req.headers.get('accept')?.includes('text/html');
+// Fetch handler
+self.addEventListener('fetch', (event)=>{
+  const req = event.request;
 
-  if (isHTML) {
-    e.respondWith((async () => {
+  // Abaikan non-GET
+  if (req.method !== 'GET') return;
+
+  // Navigasi HTML: network-first, fallback cache/offline
+  if (req.mode === 'navigate' || (req.headers.get('accept')||'').includes('text/html')) {
+    event.respondWith((async()=>{
       try {
-        const net = await fetch(req, { cache: 'no-store' });
+        const net = await fetch(req);
         const cache = await caches.open(CACHE);
         cache.put(req, net.clone());
         return net;
       } catch {
-        return (await caches.match(req)) || (await caches.match(p('index.html')));
+        const cached = await caches.match(req);
+        return cached || caches.match('./index.html');
       }
     })());
-  } else {
-    e.respondWith((async () => {
-      const cached = await caches.match(req);
-      const fetching = fetch(req).then((res) => {
-        caches.open(CACHE).then((c) => c.put(req, res.clone()));
-        return res;
-      }).catch(() => cached);
-      return cached || fetching;
-    })());
+    return;
   }
+
+  // Asset: stale-while-revalidate
+  event.respondWith((async()=>{
+    const cached = await caches.match(req);
+    const fetchPromise = fetch(req).then(res=>{
+      const clone = res.clone();
+      caches.open(CACHE).then(c=>c.put(req, clone));
+      return res;
+    }).catch(()=>cached);
+    return cached || fetchPromise;
+  })());
 });
 
-// Message handler
-self.addEventListener('message', (e) => {
+// Untuk update segera
+self.addEventListener('message', (e)=>{
   if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
