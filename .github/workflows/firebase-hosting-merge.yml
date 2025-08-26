@@ -7,9 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Tidak perlu build untuk app statis
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
+          entryPoint: frontend/public
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ABELION_AI_466122 }}
           channelId: live
