@@ -6,6 +6,9 @@
   "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "launch_handler": { "client_mode": "focus-existing" },
+  "handle_links": "preferred",
   "orientation": "portrait",
   "background_color": "#0b0f14",
   "theme_color": "#00e7ff",
@@ -19,17 +22,59 @@
 
   "screenshots": [
     { "src": "./screenshots/home-mobile.png",  "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow" },
-    { "src": "./screenshots/home-desktop.png", "sizes": "1920x1080", "type": "image/png", "form_factor": "wide" }
+    { "src": "./screenshots/home-desktop.png", "sizes": "1920x1080", "type": "image/png", "form_factor": "wide"  }
   ],
 
   "shortcuts": [
-    { "name": "Chat",  "short_name": "Chat",  "url": "./?open=chat",
-      "icons": [{ "src": "./assets/icons/shortcut-chat.png",  "sizes": "96x96" }] },
-    { "name": "Tasks", "short_name": "Tasks", "url": "./?open=tasks",
-      "icons": [{ "src": "./assets/icons/shortcut-tasks.png", "sizes": "96x96" }] }
+    {
+      "name": "Chat",
+      "short_name": "Chat",
+      "url": "./?open=chat",
+      "icons": [{ "src": "./assets/icons/shortcut-chat.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Tasks",
+      "short_name": "Tasks",
+      "url": "./?open=tasks",
+      "icons": [{ "src": "./assets/icons/shortcut-tasks.png", "sizes": "96x96", "type": "image/png" }]
+    }
   ],
 
-  "launch_handler": { "client_mode": "focus-existing" },
-  "categories": ["productivity","utilities","education"],
-  "prefer_related_applications": false
+  "share_target": {
+    "action": "./share",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": { "title": "title", "text": "text", "url": "url", "files": [] }
+  },
+
+  "protocol_handlers": [
+    { "protocol": "web+abelion", "url": "./?q=%s" }
+  ],
+
+  "file_handlers": [
+    {
+      "action": "./open",
+      "accept": {
+        "text/markdown": [".md"],
+        "application/json": [".json"],
+        "text/plain": [".txt"]
+      }
+    }
+  ],
+
+  "url_handlers": { "scope": "./" },
+
+  "edge_side_panel": { "preferred_width": 380 },
+
+  "categories": ["productivity", "utilities", "education"],
+  "prefer_related_applications": false,
+
+  "widgets": [
+    {
+      "name": "Abelion – Quick Note",
+      "description": "Widget catatan kilat.",
+      "src": "./widgets/quick-note.html",
+      "sizes": ["300x150"]
+    }
+  ]
 }
