@@ -9,12 +9,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # penting: firebase.json kamu ada di "frontend/public"
-      - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          entryPoint: frontend/public
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ABELION_AI_466122 }}
-          channelId: live
-          projectId: abelion-ai-466122
-          firebaseToolsVersion: "13.9.1"   # <- pin versi, hindari "latest"
+      # 1) Install Firebase CLI (standalone, bukan npm)
+      - name: Install Firebase CLI (standalone)
+        run: curl -sL https://firebase.tools | bash
+
+      # 2) Auth pakai service account (pastikan SECRET berisi JSON utuh)
+      - name: Setup service account
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_ABELION_AI_466122 }}' > $RUNNER_TEMP/gcp.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/gcp.json" >> $GITHUB_ENV
+
+      # 3) Deploy dari folder yang berisi firebase.json kamu
+      - name: Deploy Hosting
+        working-directory: frontend/public
+        run: |
+          firebase deploy \
+            --only hosting \
+            --project abelion-ai-466122 \
+            --non-interactive
