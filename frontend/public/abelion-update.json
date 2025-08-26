@@ -1,0 +1,10 @@
+{
+  "version": "2025-08-27-001",
+  "coreAssets": [
+    "/index.html",
+    "/styles.css",
+    "/app.js",
+    "/sw.js",
+    "/manifest.webmanifest"
+  ]
+}
