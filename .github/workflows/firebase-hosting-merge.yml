@@ -1,29 +1,11 @@
-name: Deploy to Firebase Hosting on merge
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # 1) Install Firebase CLI (standalone, bukan npm)
-      - name: Install Firebase CLI (standalone)
+- name: Install Firebase CLI (standalone)
         run: curl -sL https://firebase.tools | bash
 
-      # 2) Auth pakai service account (pastikan SECRET berisi JSON utuh)
       - name: Setup service account
         run: |
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_ABELION_AI_466122 }}' > $RUNNER_TEMP/gcp.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/gcp.json" >> $GITHUB_ENV
 
-      # 3) Deploy dari folder yang berisi firebase.json kamu
       - name: Deploy Hosting
-        working-directory: frontend/public
         run: |
-          firebase deploy \
-            --only hosting \
-            --project abelion-ai-466122 \
-            --non-interactive
+          firebase deploy --only hosting --project abelion-ai-466122 --non-interactive
