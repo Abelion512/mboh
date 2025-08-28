@@ -1,7 +1,7 @@
 {
   "hosting": {
     "site": "abelion-ai",
-    "public": "frontend/public",
+    "public": "frontend",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [{ "source": "**", "destination": "/index.html" }]
   }
