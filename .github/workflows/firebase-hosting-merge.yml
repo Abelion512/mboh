@@ -19,5 +19,5 @@ jobs:
 
       - name: Deploy Hosting
         run: |
-          cd frontend/public/  # Tambahkan baris ini
+          cd frontend
           firebase deploy --only hosting --project abelion-ai-466122 --non-interactive
