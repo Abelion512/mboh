@@ -4,17 +4,18 @@
           "private": true,
             "type": "module",
               "scripts": {
-                "build": "node update-manifest.mjs",
-                "build:update-manifest": "node update-manifest.mjs"
-              },
-                      "devDependencies": {
-                          "semantic-release": "^23.0.0",
-                              "@semantic-release/changelog": "^6.0.3",
-                                  "@semantic-release/git": "^10.0.1",
-                                      "@semantic-release/github": "^10.0.3",
-                                          "@semantic-release/commit-analyzer": "^11.1.0",
-                                              "@semantic-release/release-notes-generator": "^12.1.0",
-                                                  "globby": "^14.0.1",
-                                                      "node-fetch": "^3.3.2"
-                                                        }
-                                                        }
+    "build": "node update-manifest.mjs"
+  },
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "semantic-release": "^23.0.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^10.0.3",
+    "@semantic-release/commit-analyzer": "^11.1.0",
+    "@semantic-release/release-notes-generator": "^12.1.0",
+    "globby": "^14.0.1",
+    "node-fetch": "^3.3.2"
+  }
+}
