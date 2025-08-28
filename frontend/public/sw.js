@@ -43,7 +43,7 @@ self.addEventListener('fetch', (event)=>{
 
   // Navigasi HTML: network-first, fallback cache/offline
   if (req.mode === 'navigate' || (req.headers.get('accept')||'').includes('text/html')) {
-    event.respondWith((async()=>{
+    event.respondWith((async()=> {
       try {
         const net = await fetch(req);
         const cache = await caches.open(CACHE);
@@ -60,16 +60,25 @@ self.addEventListener('fetch', (event)=>{
   // Asset: stale-while-revalidate
   event.respondWith((async()=>{
     const cached = await caches.match(req);
-    const fetchPromise = fetch(req).then(res=>{
-      const clone = res.clone();
-      caches.open(CACHE).then(c=>c.put(req, clone));
-      return res;
-    }).catch(()=>cached);
+    const fetchPromise = fetch(req).then(net => {
+      const cache = caches.open(CACHE);
+      cache.then(c=>c.put(req, net.clone()));
+      return net;
+    }).catch(err => {
+      console.warn('SW fetch failed:', err);
+    });
     return cached || fetchPromise;
   })());
 });
 
-// Untuk update segera
-self.addEventListener('message', (e)=>{
-  if (e.data === 'SKIP_WAITING') self.skipWaiting();
+self.addEventListener('message', (event) => {
+  // Hanya proses pesan dari asal yang sama
+  if (event.origin !== self.location.origin) {
+    console.warn('Mengabaikan pesan dari asal tidak dikenal:', event.origin);
+    return;
+  }
+  
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

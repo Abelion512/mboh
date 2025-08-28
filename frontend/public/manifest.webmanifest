@@ -6,9 +6,6 @@
   "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "launch_handler": { "client_mode": "focus-existing" },
-  "handle_links": "preferred",
   "orientation": "portrait",
   "background_color": "#0b0f14",
   "theme_color": "#00e7ff",
@@ -21,8 +18,8 @@
   ],
 
   "screenshots": [
-    { "src": "./screenshots/home-mobile.png",  "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow" },
-    { "src": "./screenshots/home-desktop.png", "sizes": "1920x1080", "type": "image/png", "form_factor": "wide"  }
+    { "src": "./screenshots/home-mobile.png",  "sizes": "1080x1920", "type": "image/png" },
+    { "src": "./screenshots/home-desktop.png", "sizes": "1920x1080", "type": "image/png"  }
   ],
 
   "shortcuts": [
@@ -45,36 +42,5 @@
     "method": "GET",
     "enctype": "application/x-www-form-urlencoded",
     "params": { "title": "title", "text": "text", "url": "url", "files": [] }
-  },
-
-  "protocol_handlers": [
-    { "protocol": "web+abelion", "url": "./?q=%s" }
-  ],
-
-  "file_handlers": [
-    {
-      "action": "./open",
-      "accept": {
-        "text/markdown": [".md"],
-        "application/json": [".json"],
-        "text/plain": [".txt"]
-      }
-    }
-  ],
-
-  "url_handlers": { "scope": "./" },
-
-  "edge_side_panel": { "preferred_width": 380 },
-
-  "categories": ["productivity", "utilities", "education"],
-  "prefer_related_applications": false,
-
-  "widgets": [
-    {
-      "name": "Abelion – Quick Note",
-      "description": "Widget catatan kilat.",
-      "src": "./widgets/quick-note.html",
-      "sizes": ["300x150"]
-    }
-  ]
+  }
 }
